@@ -1,0 +1,3550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hive Mind — AI Operating Studio</title>
+  <meta name="description" content="Automação orientada por IA, inteligência de dados e orquestração autônoma para empresas. A mente de colmeia despertou.">
+
+  <!-- Fonts: Tech Startup (Space Grotesk + DM Sans) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+
+  <style>
+    /* ═══════════════════════════════════════════
+       DESIGN TOKENS — Hive Mind Dark Theme
+       Colors: Premium dark + amber/honey accent
+    ═══════════════════════════════════════════ */
+    :root {
+      /* Core palette */
+      --primary: #F59E0B;
+      --primary-light: #FBBF24;
+      --primary-dark: #D97706;
+      --on-primary: #0A0A0A;
+
+      --accent: #8B5CF6;
+      --accent-light: #A78BFA;
+      --on-accent: #FFFFFF;
+
+      --bg: #050505;
+      --bg-elevated: #0A0A0A;
+      --bg-card: #141414;
+      --bg-card-hover: #1F1F1F;
+
+      --fg: #F8FAFC;
+      --fg-muted: #B0B0B0;
+      --fg-subtle: #808080;
+
+      --border: rgba(180, 180, 180, 0.10);
+      --border-accent: rgba(245, 158, 11, 0.3);
+
+      --destructive: #EF4444;
+      --success: #22C55E;
+
+      /* Gradients */
+      --gradient-hero: linear-gradient(135deg, #F59E0B 0%, #D97706 50%, #8B5CF6 100%);
+      --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(245, 158, 11, 0.06), transparent 40%);
+      --gradient-card: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+
+      /* Shadows */
+      --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+      --shadow-glow: 0 0 40px rgba(245, 158, 11, 0.15);
+
+      /* Spacing */
+      --section-gap: 120px;
+      --container-max: 1200px;
+
+      /* Typography */
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Radius */
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+    }
+
+    /* ═══════════════════════════════════════════
+       RESET & BASE
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ═══════════════════════════════════════════
+       GLOBAL SHADER BACKGROUND (position:fixed)
+       Covers entire viewport, sits behind all content.
+       WebGL canvas + overlay are injected here by JS.
+    ═══════════════════════════════════════════ */
+    #shader-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    #shader-bg canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #shader-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      pointer-events: none;
+    }
+
+    /* Reduced-motion: static amber gradient fallback */
+    @media (prefers-reduced-motion: reduce) {
+      #shader-bg canvas {
+        display: none;
+      }
+      #shader-bg {
+        background: radial-gradient(ellipse 80% 60% at 60% 30%,
+          #8A6A00 0%, #141414 55%, #050505 100%);
+      }
+    }
+
+    /* ═══════════════════════════════════════════
+       GLASS PANEL SYSTEM
+       Semi-opaque frosted panels for content sections.
+       Shader shows through gaps between sections.
+    ═══════════════════════════════════════════ */
+    .glass-panel {
+      position: relative;
+      z-index: 1;
+      background: rgba(5, 5, 5, 0.48);
+      backdrop-filter: blur(18px) saturate(1.2);
+      -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    }
+
+    .glass-panel--dense {
+      background: rgba(10, 10, 10, 0.55);
+      backdrop-filter: blur(20px) saturate(1.1);
+      -webkit-backdrop-filter: blur(20px) saturate(1.1);
+    }
+
+    .glass-panel--light {
+      background: rgba(5, 5, 5, 0.40);
+      backdrop-filter: blur(14px) saturate(1.3);
+      -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    }
+
+    .glass-panel--solid {
+      background: rgba(5, 5, 5, 0.65);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+    }
+
+    /* Subtle top edge highlight on glass panels */
+    .glass-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent,
+        rgba(245, 158, 11, 0.12) 30%,
+        rgba(245, 158, 11, 0.06) 70%,
+        transparent);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Fallback for browsers without backdrop-filter */
+    @supports not (backdrop-filter: blur(1px)) {
+      .glass-panel,
+      .glass-panel--dense,
+      .glass-panel--light,
+      .glass-panel--solid {
+        background: rgba(5, 5, 5, 0.88);
+      }
+    }
+
+    ::selection {
+      background: rgba(245, 158, 11, 0.3);
+      color: var(--fg);
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    a:hover {
+      color: var(--primary-light);
+    }
+
+    /* ═══════════════════════════════════════════
+       UTILITY CLASSES
+    ═══════════════════════════════════════════ */
+    .container {
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .section {
+      padding: var(--section-gap) 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .label::before {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: var(--primary);
+    }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      color: var(--fg);
+      margin-bottom: 16px;
+    }
+
+    .section-subtitle {
+      font-size: 18px;
+      color: var(--fg-muted);
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    .gradient-text {
+      background: var(--gradient-hero);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ═══════════════════════════════════════════
+       NAVBAR
+    ═══════════════════════════════════════════ */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 8px 0;
+      transition: all 0.3s ease;
+      background: transparent;
+    }
+
+    .navbar.scrolled {
+      background: rgba(5, 5, 5, 0.75);
+      backdrop-filter: blur(20px) saturate(1.2);
+      -webkit-backdrop-filter: blur(20px) saturate(1.2);
+      border-bottom: 1px solid rgba(245, 158, 11, 0.08);
+      padding: 6px 0;
+    }
+
+    .navbar .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 28px;
+      color: var(--fg);
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: height 0.3s ease;
+    }
+
+    .navbar.scrolled .logo-icon {
+      height: 64px;
+    }
+
+    .logo-icon img {
+      height: 120px;
+      width: auto;
+      object-fit: contain;
+      display: block;
+      transition: height 0.3s ease;
+    }
+
+    .navbar.scrolled .logo-icon img {
+      height: 64px;
+    }
+
+    /* Gradient text: mustard amber → deep gold → warm dark */
+    .logo-text {
+      background: linear-gradient(135deg,
+        #FBBF24 0%,
+        #F59E0B 30%,
+        #D97706 65%,
+        #92400E 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--fg-muted);
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--fg);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 14px;
+      padding: 10px 24px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--on-primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-light);
+      color: var(--on-primary);
+      box-shadow: var(--shadow-glow);
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-large {
+      padding: 14px 32px;
+      font-size: 16px;
+      border-radius: var(--radius-md);
+    }
+
+    /* Mobile nav toggle */
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--fg);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* ═══════════════════════════════════════════
+       HERO SECTION
+    ═══════════════════════════════════════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      padding-top: 80px;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    /* Hero hex overlay — only the hex grid + honey effects
+       WebGL shader is now in #shader-bg (global fixed) */
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    /* Lighter overlay on hero so shader is more vivid here */
+    .hero-bg .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.10);
+      z-index: 0;
+    }
+
+    .hero .container {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-content {
+      max-width: 780px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--primary);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+
+    .hero-badge .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .hero h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(40px, 7vw, 72px);
+      font-weight: 700;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 24px;
+    }
+
+    .hero p {
+      font-size: 20px;
+      color: var(--fg-muted);
+      line-height: 1.7;
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+
+    .hero-ctas {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 48px;
+      margin-top: 80px;
+      padding-top: 40px;
+      border-top: 1px solid var(--border);
+    }
+
+    .hero-stat {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero-stat .value {
+      font-family: var(--font-heading);
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -1px;
+    }
+
+    .hero-stat .desc {
+      font-size: 14px;
+      color: var(--fg-subtle);
+      margin-top: 4px;
+    }
+
+    /* ═══════════════════════════════════════════
+       LOGOS / TRUST STRIP
+    ═══════════════════════════════════════════ */
+    .trust-strip {
+      padding: 60px 0;
+      border-top: none;
+      border-bottom: none;
+    }
+
+    .trust-strip p {
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--fg-subtle);
+      margin-bottom: 32px;
+    }
+
+    .tech-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .tech-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-heading);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--fg-subtle);
+      opacity: 0.6;
+      transition: opacity 0.3s ease;
+    }
+
+    .tech-logo:hover {
+      opacity: 1;
+    }
+
+    .tech-logo i {
+      font-size: 22px;
+    }
+
+    /* ═══════════════════════════════════════════
+       HIVE MODEL SECTION
+    ═══════════════════════════════════════════ */
+    .hive-model {
+      /* background handled by .glass-panel--dense */
+    }
+
+    .hive-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 56px;
+    }
+
+    .hive-card {
+      background: rgba(14, 14, 14, 0.42);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(245, 158, 11, 0.08);
+      border-radius: var(--radius-lg);
+      padding: 40px 32px;
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hive-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gradient-hero);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
+    .hive-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-card);
+    }
+
+    .hive-card:hover::before {
+      opacity: 1;
+    }
+
+    .hive-card-icon {
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+      font-size: 28px;
+      margin-bottom: 24px;
+    }
+
+    .hive-card:nth-child(1) .hive-card-icon {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--primary);
+    }
+
+    .hive-card:nth-child(2) .hive-card-icon {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--success);
+    }
+
+    .hive-card:nth-child(3) .hive-card-icon {
+      background: rgba(139, 92, 246, 0.1);
+      color: var(--accent);
+    }
+
+    .hive-card h3 {
+      font-family: var(--font-heading);
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+
+    .hive-card .role {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+
+    .hive-card p {
+      font-size: 15px;
+      color: var(--fg-muted);
+      line-height: 1.7;
+    }
+
+    /* ═══════════════════════════════════════════
+       SERVICES SECTION
+    ═══════════════════════════════════════════ */
+    .services-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .services-header .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .services-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 500;
+      padding: 10px 20px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg-muted);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .tab-btn:hover, .tab-btn.active {
+      background: var(--primary);
+      color: var(--on-primary);
+      border-color: var(--primary);
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .service-card {
+      background: rgba(14, 14, 14, 0.40);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(245, 158, 11, 0.06);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      transition: all 0.3s ease;
+      display: none;
+    }
+
+    .service-card.visible {
+      display: block;
+    }
+
+    .service-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+    }
+
+    .service-number {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--fg-subtle);
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    .service-card h3 {
+      font-family: var(--font-heading);
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      letter-spacing: -0.3px;
+    }
+
+    .service-card p {
+      font-size: 14px;
+      color: var(--fg-muted);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .service-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .service-stack span {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 10px;
+      background: rgba(180, 180, 180, 0.08);
+      border-radius: 4px;
+      color: var(--fg-subtle);
+    }
+
+    /* ═══════════════════════════════════════════
+       PILLARS SECTION
+    ═══════════════════════════════════════════ */
+    .pillars {
+      /* background handled by .glass-panel--dense */
+    }
+
+    .pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 56px;
+    }
+
+    .pillar-card {
+      border: 1px solid rgba(245, 158, 11, 0.08);
+      border-radius: var(--radius-lg);
+      padding: 40px 32px;
+      background: rgba(14, 14, 14, 0.42);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .pillar-card:hover {
+      border-color: var(--border-accent);
+    }
+
+    .pillar-number {
+      font-family: var(--font-heading);
+      font-size: 64px;
+      font-weight: 700;
+      color: rgba(245, 158, 11, 0.08);
+      position: absolute;
+      top: 20px;
+      right: 28px;
+      line-height: 1;
+    }
+
+    .pillar-card h3 {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .pillar-card .pillar-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+
+    .pillar-card p {
+      font-size: 15px;
+      color: var(--fg-muted);
+      line-height: 1.7;
+    }
+
+    /* ═══════════════════════════════════════════
+       ORCHESTRATOR SECTION
+    ═══════════════════════════════════════════ */
+    .orchestrator-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 56px;
+      align-items: center;
+      margin-top: 56px;
+    }
+
+    .orch-visual {
+      background: rgba(10, 10, 10, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(245, 158, 11, 0.08);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .orch-visual::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--gradient-glow);
+      pointer-events: none;
+    }
+
+    .orch-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .orch-metric {
+      background: rgba(14, 14, 14, 0.38);
+      border: 1px solid rgba(245, 158, 11, 0.06);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      transition: border-color 0.3s ease;
+    }
+
+    .orch-metric:hover {
+      border-color: var(--border-accent);
+    }
+
+    .orch-metric .metric-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--fg-subtle);
+      margin-bottom: 8px;
+    }
+
+    .orch-metric .metric-value {
+      font-family: var(--font-heading);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: -1px;
+    }
+
+    .orch-metric .metric-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--success);
+      margin-top: 6px;
+    }
+
+    .orch-metric .metric-status .dot-live {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    .orch-features {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .orch-feature {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .orch-feature-icon {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--primary);
+      font-size: 20px;
+    }
+
+    .orch-feature h4 {
+      font-family: var(--font-heading);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .orch-feature p {
+      font-size: 14px;
+      color: var(--fg-muted);
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════
+       IMPACT SECTION
+    ═══════════════════════════════════════════ */
+    .impact {
+      /* background handled by .glass-panel--dense */
+    }
+
+    .impact-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .impact-header .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .impact-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .impact-card {
+      text-align: center;
+      padding: 32px 20px;
+      border: 1px solid rgba(245, 158, 11, 0.06);
+      border-radius: var(--radius-lg);
+      background: rgba(14, 14, 14, 0.42);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .impact-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+    }
+
+    .impact-card .impact-value {
+      font-family: var(--font-heading);
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      margin-bottom: 8px;
+    }
+
+    .impact-card:nth-child(1) .impact-value { color: var(--primary); }
+    .impact-card:nth-child(2) .impact-value { color: var(--accent-light); }
+    .impact-card:nth-child(3) .impact-value { color: var(--success); }
+    .impact-card:nth-child(4) .impact-value { color: var(--primary-light); }
+
+    .impact-card .impact-label {
+      font-size: 14px;
+      color: var(--fg-muted);
+    }
+
+    /* Performance bars */
+    .perf-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 24px;
+    }
+
+    .perf-item {
+      padding: 24px;
+      border: 1px solid rgba(245, 158, 11, 0.06);
+      border-radius: var(--radius-md);
+      background: rgba(14, 14, 14, 0.38);
+    }
+
+    .perf-item .perf-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .perf-item .perf-name {
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .perf-item .perf-pct {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--primary);
+    }
+
+    .perf-bar {
+      height: 6px;
+      background: rgba(180, 180, 180, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .perf-bar-fill {
+      height: 100%;
+      background: var(--gradient-hero);
+      border-radius: 3px;
+      transition: width 1s ease;
+    }
+
+    /* ═══════════════════════════════════════════
+       CTA SECTION
+    ═══════════════════════════════════════════ */
+    .cta-section {
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .cta-box {
+      text-align: center;
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    .cta-box h2 {
+      font-family: var(--font-heading);
+      font-size: clamp(32px, 5vw, 48px);
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+
+    .cta-box p {
+      font-size: 18px;
+      color: var(--fg-muted);
+      margin-bottom: 40px;
+      line-height: 1.7;
+    }
+
+    .cta-actions {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 32px;
+    }
+
+    .cta-details {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      flex-wrap: wrap;
+    }
+
+    .cta-detail {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--fg-subtle);
+    }
+
+    .cta-detail i {
+      color: var(--primary);
+    }
+
+    /* CTA glow is replaced by shader visible through glass */
+
+    /* ═══════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════ */
+    .footer {
+      border-top: none;
+      padding: 48px 0 32px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .footer-grid {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 40px;
+    }
+
+    .footer-brand {
+      max-width: 300px;
+    }
+
+    .footer-brand .logo {
+      margin-bottom: 16px;
+    }
+
+    .footer-brand p {
+      font-size: 14px;
+      color: var(--fg-subtle);
+      line-height: 1.6;
+    }
+
+    .footer-col h4 {
+      font-family: var(--font-heading);
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .footer-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .footer-col a {
+      font-size: 14px;
+      color: var(--fg-subtle);
+    }
+
+    .footer-col a:hover {
+      color: var(--fg);
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-bottom p {
+      font-size: 13px;
+      color: var(--fg-subtle);
+    }
+
+    .footer-bottom .footer-socials {
+      display: flex;
+      gap: 16px;
+    }
+
+    .footer-bottom .footer-socials a {
+      color: var(--fg-subtle);
+      font-size: 18px;
+    }
+
+    .footer-bottom .footer-socials a:hover {
+      color: var(--primary);
+    }
+
+    /* ═══════════════════════════════════════════
+       SCROLL REVEAL ANIMATION
+    ═══════════════════════════════════════════ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ═══════════════════════════════════════════
+       HIVE SIDE DECORATIONS — Animated Hexagons,
+       Bee Swarm Particles & Connection Lines
+    ═══════════════════════════════════════════ */
+
+    /* Container for all side decorations */
+    .hive-decor-wrapper {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    /* Sections with decorations need relative positioning */
+    .section.has-hive-decor {
+      position: relative;
+    }
+
+    .section.has-hive-decor > .container {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ── Floating Hex Ornaments (left + right) ── */
+    .hex-ornament {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .section.has-hive-decor .hive-decor-wrapper.active .hex-ornament {
+      opacity: 1;
+    }
+
+    .hex-ornament svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .hex-ornament--sm { width: 36px; height: 36px; }
+    .hex-ornament--lg { width: 84px; height: 84px; }
+    .hex-ornament--xl { width: 110px; height: 110px; }
+
+    /* Left column ornaments */
+    .hex-ornament.left-1 { left: 2%; top: 12%; animation: hexFloat1 8s ease-in-out infinite, hexPulse 4s ease-in-out infinite; }
+    .hex-ornament.left-2 { left: 4%; top: 35%; animation: hexFloat2 10s ease-in-out infinite 1s, hexPulse 5s ease-in-out infinite 0.5s; }
+    .hex-ornament.left-3 { left: 1%; top: 58%; animation: hexFloat3 12s ease-in-out infinite 2s, hexPulse 6s ease-in-out infinite 1s; }
+    .hex-ornament.left-4 { left: 5%; top: 80%; animation: hexFloat1 9s ease-in-out infinite 3s, hexPulse 4.5s ease-in-out infinite 1.5s; }
+
+    /* Right column ornaments */
+    .hex-ornament.right-1 { right: 3%; top: 8%; animation: hexFloat2 9s ease-in-out infinite 0.5s, hexPulse 5s ease-in-out infinite 0.3s; }
+    .hex-ornament.right-2 { right: 1%; top: 30%; animation: hexFloat3 11s ease-in-out infinite 1.5s, hexPulse 4s ease-in-out infinite 0.8s; }
+    .hex-ornament.right-3 { right: 4%; top: 55%; animation: hexFloat1 8s ease-in-out infinite 2.5s, hexPulse 6s ease-in-out infinite 1.2s; }
+    .hex-ornament.right-4 { right: 2%; top: 78%; animation: hexFloat2 10s ease-in-out infinite 3.5s, hexPulse 5s ease-in-out infinite 2s; }
+
+    @keyframes hexFloat1 {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      25%      { transform: translateY(-12px) rotate(5deg); }
+      50%      { transform: translateY(4px) rotate(-3deg); }
+      75%      { transform: translateY(-8px) rotate(2deg); }
+    }
+
+    @keyframes hexFloat2 {
+      0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+      33%      { transform: translateY(-18px) rotate(-4deg) scale(1.05); }
+      66%      { transform: translateY(8px) rotate(6deg) scale(0.95); }
+    }
+
+    @keyframes hexFloat3 {
+      0%, 100% { transform: translate(0px, 0px) rotate(0deg); }
+      25%      { transform: translate(6px, -10px) rotate(3deg); }
+      50%      { transform: translate(-4px, 6px) rotate(-5deg); }
+      75%      { transform: translate(8px, -14px) rotate(4deg); }
+    }
+
+    @keyframes hexPulse {
+      0%, 100% { filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.2)); }
+      50%      { filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.5)); }
+    }
+
+    /* ── Bee Swarm Canvas ── */
+    .bee-swarm-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* ── Connection Lines ── */
+    .hive-connection-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0;
+      transition: opacity 1.2s ease 0.3s;
+    }
+
+    .hive-decor-wrapper.active .hive-connection-svg {
+      opacity: 1;
+    }
+
+    .connection-line {
+      fill: none;
+      stroke: rgba(245, 158, 11, 0.12);
+      stroke-width: 1;
+      stroke-dasharray: 8 6;
+      animation: connectionFlow 3s linear infinite;
+    }
+
+    .connection-line--accent {
+      fill: none;
+      stroke: rgba(139, 92, 246, 0.10);
+      stroke-dasharray: 12 8;
+      animation: connectionFlow 4s linear infinite reverse;
+    }
+
+    @keyframes connectionFlow {
+      from { stroke-dashoffset: 0; }
+      to   { stroke-dashoffset: -28; }
+    }
+
+    /* ── Pulse Nodes (glowing dots at connection intersections) ── */
+    .pulse-node {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .hive-decor-wrapper.active .pulse-node {
+      opacity: 1;
+      animation: nodeGlow 3s ease-in-out infinite;
+    }
+
+    .pulse-node::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      animation: nodeRing 3s ease-in-out infinite;
+    }
+
+    .pulse-node::after {
+      content: '';
+      position: absolute;
+      inset: -14px;
+      border-radius: 50%;
+      border: 1px solid rgba(245, 158, 11, 0.1);
+      animation: nodeRing 3s ease-in-out infinite 0.5s;
+    }
+
+    .pulse-node--accent {
+      background: var(--accent);
+    }
+    .pulse-node--accent::before {
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+    .pulse-node--accent::after {
+      border-color: rgba(139, 92, 246, 0.1);
+    }
+
+    @keyframes nodeGlow {
+      0%, 100% { box-shadow: 0 0 4px rgba(245, 158, 11, 0.4); transform: scale(1); }
+      50%      { box-shadow: 0 0 18px rgba(245, 158, 11, 0.7); transform: scale(1.4); }
+    }
+
+    @keyframes nodeRing {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.8); opacity: 0; }
+    }
+
+    /* ── Animated orbiting bee trail around cards ── */
+    .orbit-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px dashed rgba(245, 158, 11, 0.08);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1s ease 0.5s;
+    }
+
+    .hive-decor-wrapper.active .orbit-ring {
+      opacity: 1;
+    }
+
+    .orbit-ring--1 {
+      width: 300px; height: 300px;
+      left: -100px; top: 10%;
+      animation: orbitSpin 20s linear infinite;
+    }
+    .orbit-ring--2 {
+      width: 400px; height: 400px;
+      right: -150px; top: 30%;
+      animation: orbitSpin 28s linear infinite reverse;
+    }
+    .orbit-ring--3 {
+      width: 250px; height: 250px;
+      left: -80px; bottom: 15%;
+      animation: orbitSpin 24s linear infinite;
+    }
+
+    .orbit-bee {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.9) 0%, rgba(245, 158, 11, 0) 70%);
+      border-radius: 50%;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .orbit-bee::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 3px;
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.4), transparent);
+      top: 50%;
+      right: 100%;
+      transform: translateY(-50%);
+    }
+
+    @keyframes orbitSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* ── Queen (Rainha) crown glow aura ── */
+    .queen-aura {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+      animation: queenPulse 4s ease-in-out infinite;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .hive-decor-wrapper.active .queen-aura {
+      opacity: 1;
+    }
+
+    @keyframes queenPulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50%      { transform: scale(1.3); opacity: 1; }
+    }
+
+    /* ── Data flow particles (for orchestrator section) ── */
+    .data-stream {
+      position: absolute;
+      width: 2px;
+      background: linear-gradient(180deg, transparent, rgba(245, 158, 11, 0.5), transparent);
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .hive-decor-wrapper.active .data-stream {
+      opacity: 1;
+      animation: streamFlow 2.5s linear infinite;
+    }
+
+    .data-stream--1 { left: 3%; top: 10%; height: 60px; animation-delay: 0s !important; }
+    .data-stream--2 { left: 6%; top: 30%; height: 80px; animation-delay: 0.8s !important; }
+    .data-stream--3 { right: 4%; top: 20%; height: 70px; animation-delay: 0.4s !important; }
+    .data-stream--4 { right: 7%; top: 50%; height: 50px; animation-delay: 1.2s !important; }
+    .data-stream--5 { left: 2%; top: 60%; height: 90px; animation-delay: 1.6s !important; }
+    .data-stream--6 { right: 3%; top: 70%; height: 65px; animation-delay: 2s !important; }
+
+    @keyframes streamFlow {
+      0%   { transform: translateY(-100%); opacity: 0; }
+      20%  { opacity: 1; }
+      80%  { opacity: 1; }
+      100% { transform: translateY(200%); opacity: 0; }
+    }
+
+    /* ═══════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════ */
+
+    /* ── Tablet (1024px) ── */
+    @media (max-width: 1024px) {
+      .hex-ornament.left-1, .hex-ornament.left-4,
+      .hex-ornament.right-1, .hex-ornament.right-4 {
+        display: none;
+      }
+
+      .orbit-ring--2 { display: none; }
+
+      .hive-grid,
+      .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .impact-grid,
+      .perf-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .orchestrator-wrapper {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+
+      .pillars-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ── Mobile (768px) ── */
+    @media (max-width: 768px) {
+      :root {
+        --section-gap: 72px;
+      }
+
+      .container {
+        padding: 0 20px;
+      }
+
+      /* ── Lighter hive decorations on mobile (keep the magic) ── */
+      .hive-decor-wrapper {
+        opacity: 0.5;
+      }
+
+      /* Hide heavier orbit rings & data streams on mobile */
+      .orbit-ring,
+      .data-stream,
+      .queen-aura {
+        display: none;
+      }
+
+      /* Keep only a few hex ornaments, smaller */
+      .hex-ornament.left-3, .hex-ornament.left-4,
+      .hex-ornament.right-3, .hex-ornament.right-4 {
+        display: none;
+      }
+
+      .hex-ornament { transform: scale(0.7); }
+
+      /* Bee swarm canvas stays (JS handles particle count) */
+
+      /* ── Mobile Navbar ── */
+      .navbar {
+        padding: 6px 0;
+      }
+
+      .logo {
+        gap: 10px;
+        font-size: 22px;
+      }
+
+      .logo-icon {
+        height: 56px;
+      }
+
+      .logo-icon img {
+        height: 56px;
+      }
+
+      .navbar.scrolled .logo-icon,
+      .navbar.scrolled .logo-icon img {
+        height: 42px;
+      }
+
+      .nav-links {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(5, 5, 5, 0.97);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        z-index: 90;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        pointer-events: none;
+      }
+
+      .nav-links.open {
+        display: flex;
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+        animation: fadeSlideIn 0.35s ease forwards;
+      }
+
+      @keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(-16px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .nav-links a {
+        font-size: 20px;
+        padding: 8px 16px;
+      }
+
+      .nav-links li:last-child .btn {
+        margin-top: 8px;
+        padding: 14px 32px;
+        font-size: 16px;
+      }
+
+      .nav-toggle {
+        display: flex;
+        z-index: 95;
+        width: 44px;
+        height: 44px;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        transition: background 0.2s ease;
+      }
+
+      .nav-toggle:active {
+        background: rgba(245, 158, 11, 0.1);
+      }
+
+      /* ── Hero Mobile ── */
+      .hero {
+        min-height: calc(100vh - 60px);
+        min-height: calc(100dvh - 60px);
+        padding-top: 70px;
+      }
+
+      .hero-badge {
+        margin-bottom: 24px;
+        font-size: 11px;
+      }
+
+      .hero h1 {
+        font-size: clamp(32px, 9vw, 56px);
+        letter-spacing: -1.5px;
+        margin-bottom: 20px;
+      }
+
+      .hero p {
+        font-size: 17px;
+        margin-bottom: 32px;
+        line-height: 1.6;
+      }
+
+      .hero-stats {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0;
+        margin-top: 48px;
+        padding-top: 32px;
+      }
+
+      .hero-stat {
+        flex: 1 1 50%;
+        min-width: 0;
+        padding: 12px 0;
+      }
+
+      .hero-stat .value {
+        font-size: 28px;
+      }
+
+      .hero-stat .desc {
+        font-size: 13px;
+      }
+
+      /* ── Cards & Grids ── */
+      .hive-grid,
+      .services-grid,
+      .impact-grid,
+      .perf-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .hive-grid {
+        margin-top: 40px;
+      }
+
+      .hive-card {
+        padding: 28px 24px;
+      }
+
+      .hive-card h3 {
+        font-size: 20px;
+      }
+
+      .hive-card p {
+        font-size: 14px;
+      }
+
+      .service-card {
+        padding: 24px 20px;
+      }
+
+      .pillar-card {
+        padding: 28px 24px;
+      }
+
+      .pillar-number {
+        font-size: 48px;
+        top: 16px;
+        right: 20px;
+      }
+
+      .section-title {
+        font-size: clamp(28px, 6vw, 40px);
+      }
+
+      .section-subtitle {
+        font-size: 16px;
+      }
+
+      /* ── Orchestrator ── */
+      .orch-visual {
+        padding: 24px;
+      }
+
+      .orch-metrics {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .orch-metric {
+        padding: 16px;
+      }
+
+      .orch-metric .metric-value {
+        font-size: 22px;
+      }
+
+      .orch-feature-icon {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        font-size: 18px;
+      }
+
+      /* ── Impact ── */
+      .impact-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .impact-card {
+        padding: 24px 16px;
+      }
+
+      .impact-card .impact-value {
+        font-size: 32px;
+      }
+
+      .perf-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      /* ── CTA ── */
+      .cta-box h2 {
+        font-size: clamp(26px, 6vw, 38px);
+      }
+
+      .cta-box p {
+        font-size: 16px;
+      }
+
+      .cta-details {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      /* ── Footer ── */
+      .footer-grid {
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .footer-brand {
+        max-width: 100%;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+      }
+
+      /* ── Trust Strip ── */
+      .trust-strip {
+        padding: 40px 0;
+      }
+
+      .tech-logos {
+        gap: 20px;
+      }
+
+      .tech-logo {
+        font-size: 13px;
+      }
+
+      /* ── Services Tabs ── */
+      .services-tabs {
+        gap: 8px;
+      }
+
+      .tab-btn {
+        font-size: 13px;
+        padding: 9px 16px;
+      }
+
+      /* ── Buttons touch-friendly ── */
+      .btn {
+        min-height: 44px;
+        padding: 12px 24px;
+      }
+
+      .btn-large {
+        padding: 14px 28px;
+      }
+
+      /* ── Glass panels lighter blur on mobile for perf ── */
+      .glass-panel {
+        backdrop-filter: blur(12px) saturate(1.1);
+        -webkit-backdrop-filter: blur(12px) saturate(1.1);
+      }
+
+      /* ── Scroll reveal: faster on mobile ── */
+      .reveal {
+        transform: translateY(16px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+      }
+    }
+
+    /* ── Small mobile (480px) ── */
+    @media (max-width: 480px) {
+      :root {
+        --section-gap: 56px;
+      }
+
+      .container {
+        padding: 0 16px;
+      }
+
+      .hero h1 {
+        font-size: clamp(28px, 10vw, 48px);
+        letter-spacing: -1px;
+      }
+
+      .hero p {
+        font-size: 16px;
+      }
+
+      .hero-ctas {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .hero-ctas .btn {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .hero-stats {
+        margin-top: 40px;
+        padding-top: 24px;
+      }
+
+      .hero-stat .value {
+        font-size: 24px;
+      }
+
+      .hero-stat .desc {
+        font-size: 12px;
+      }
+
+      .services-tabs {
+        gap: 6px;
+        padding: 0 4px;
+      }
+
+      .tab-btn {
+        font-size: 12px;
+        padding: 8px 12px;
+      }
+
+      /* Impact grid: 2 columns even on small screens */
+      .impact-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .impact-card .impact-value {
+        font-size: 28px;
+      }
+
+      .impact-card .impact-label {
+        font-size: 12px;
+      }
+
+      /* Perf: single col on very small */
+      .perf-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .orch-metrics {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .cta-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .cta-actions .btn {
+        justify-content: center;
+        width: 100%;
+      }
+
+      /* Footer cols side by side */
+      .footer-grid {
+        gap: 28px;
+      }
+
+      .footer-col h4 {
+        font-size: 13px;
+        margin-bottom: 12px;
+      }
+
+      .tech-logos {
+        gap: 16px 24px;
+        justify-content: center;
+      }
+
+      .tech-logo {
+        font-size: 12px;
+      }
+
+      .tech-logo i {
+        font-size: 18px;
+      }
+
+      /* Lighter hive decorations for very small */
+      .hive-decor-wrapper {
+        opacity: 0.35;
+      }
+
+      .hex-ornament.left-2, .hex-ornament.right-2 {
+        display: none;
+      }
+
+      .logo {
+        gap: 8px;
+        font-size: 20px;
+      }
+
+      .logo-icon {
+        height: 44px;
+      }
+
+      .logo-icon img {
+        height: 44px;
+      }
+
+      .navbar.scrolled .logo-icon,
+      .navbar.scrolled .logo-icon img {
+        height: 36px;
+      }
+    }
+
+    /* ── Ultra-small (360px) — Galaxy S, iPhone SE ── */
+    @media (max-width: 360px) {
+      .hero h1 {
+        font-size: 28px;
+      }
+
+      .hero p {
+        font-size: 15px;
+      }
+
+      .hive-card {
+        padding: 24px 18px;
+      }
+
+      .section-title {
+        font-size: clamp(24px, 7vw, 32px);
+      }
+
+      .impact-card .impact-value {
+        font-size: 24px;
+      }
+    }
+
+    /* ── Safe area insets for notch devices (iPhone X+) ── */
+    @supports (padding: env(safe-area-inset-bottom)) {
+      .footer {
+        padding-bottom: calc(32px + env(safe-area-inset-bottom));
+      }
+
+      .nav-links.open {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+
+      .navbar {
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+    }
+
+    /* ── Landscape mobile ── */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .hero {
+        min-height: auto;
+        padding: 80px 0 40px;
+      }
+
+      .hero-stats {
+        margin-top: 32px;
+      }
+
+      .section {
+        padding: 56px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═════════════════════════════════
+       GLOBAL SHADER BACKGROUND
+       Fixed behind all content. JS injects
+       WebGL canvas + overlay here.
+  ═════════════════════════════════ -->
+  <div id="shader-bg" aria-hidden="true"></div>
+
+  <!-- ═══════════════════════════════════
+       NAVBAR
+  ═══════════════════════════════════ -->
+  <nav class="navbar" id="navbar">
+    <div class="container">
+      <a href="#" class="logo">
+        <span class="logo-icon">
+          <img
+            id="hm-logo-img"
+            src="src/logo/hive-mind-logo-transparent.png"
+            alt="Hive Mind logo"
+            height="120"
+          >
+        </span>
+        <span class="logo-text">Hive Mind</span>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#modelo">Modelo</a></li>
+        <li><a href="#servicos">Serviços</a></li>
+        <li><a href="#pilares">Pilares</a></li>
+        <li><a href="#orquestrador">Orquestrador</a></li>
+        <li><a href="#impacto">Impacto</a></li>
+        <li><a href="#contato" class="btn btn-primary">Falar com a Colmeia</a></li>
+      </ul>
+
+      <button class="nav-toggle" id="navToggle" aria-label="Abrir menu de navegação">
+        <i class="ph ph-list"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════
+       HERO
+  ═══════════════════════════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <div class="hero-overlay"></div>
+    </div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          AI Operating Studio
+        </div>
+        <h1>
+          A mente de colmeia<br>
+          <span class="gradient-text">despertou.</span>
+        </h1>
+        <p>
+          Automação orientada por IA, inteligência de dados e orquestração autônoma para empresas. Uma única camada de execução resiliente que conecta fluxos, pipelines e agentes especializados.
+        </p>
+        <div class="hero-ctas">
+          <a href="#contato" class="btn btn-primary btn-large">
+            Agendar Diagnóstico
+            <i class="ph ph-arrow-right"></i>
+          </a>
+          <a href="#modelo" class="btn btn-outline btn-large">
+            Conhecer o Modelo
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="value">+70%</span>
+            <span class="desc">Eficiência operacional</span>
+          </div>
+          <div class="hero-stat">
+            <span class="value">5×</span>
+            <span class="desc">Decisões mais rápidas</span>
+          </div>
+          <div class="hero-stat">
+            <span class="value">~0%</span>
+            <span class="desc">Erro em fluxos automatizados</span>
+          </div>
+          <div class="hero-stat">
+            <span class="value">24/7</span>
+            <span class="desc">Throughput contínuo</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       TRUST STRIP
+  ═══════════════════════════════════ -->
+  <section class="trust-strip glass-panel">
+    <div class="container">
+      <p>Stack Tecnológico</p>
+      <div class="tech-logos">
+        <span class="tech-logo"><i class="ph ph-file-py"></i> Python</span>
+        <span class="tech-logo"><i class="ph ph-brain"></i> Claude</span>
+        <span class="tech-logo"><i class="ph ph-terminal"></i> Claude Code</span>
+        <span class="tech-logo"><i class="ph ph-link-simple-horizontal"></i> LangChain</span>
+        <span class="tech-logo"><i class="ph ph-flow-arrow"></i> n8n</span>
+        <span class="tech-logo"><i class="ph ph-robot"></i> Custom LLMs</span>
+        <span class="tech-logo"><i class="ph ph-users-three"></i> AutoGen</span>
+        <span class="tech-logo"><i class="ph ph-table"></i> Pandas</span>
+        <span class="tech-logo"><i class="ph ph-lightning"></i> FastAPI</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       HIVE MODEL
+  ═══════════════════════════════════ -->
+  <section class="section hive-model glass-panel glass-panel--dense has-hive-decor" id="modelo">
+    <!-- ── Hive Model Side Decorations ── -->
+    <div class="hive-decor-wrapper" aria-hidden="true">
+      <!-- Hex ornaments — left -->
+      <div class="hex-ornament left-1 hex-ornament--lg">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.15)" stroke-width="1.5"/><polygon points="50,20 76,35 76,65 50,80 24,65 24,35" fill="rgba(245,158,11,0.03)" stroke="rgba(245,158,11,0.10)" stroke-width="1"/></svg>
+      </div>
+      <div class="hex-ornament left-2 hex-ornament--sm">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(245,158,11,0.05)" stroke="rgba(245,158,11,0.20)" stroke-width="2"/></svg>
+      </div>
+      <div class="hex-ornament left-3">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(139,92,246,0.12)" stroke-width="1.5"/></svg>
+      </div>
+      <!-- Hex ornaments — right -->
+      <div class="hex-ornament right-1">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.18)" stroke-width="1.5"/><circle cx="50" cy="50" r="5" fill="rgba(245,158,11,0.3)"/></svg>
+      </div>
+      <div class="hex-ornament right-2 hex-ornament--xl">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.08)" stroke-width="1"/><polygon points="50,15 80,32 80,68 50,85 20,68 20,32" fill="none" stroke="rgba(245,158,11,0.12)" stroke-width="1"/><polygon points="50,28 68,38 68,62 50,72 32,62 32,38" fill="rgba(245,158,11,0.04)" stroke="rgba(245,158,11,0.15)" stroke-width="1"/></svg>
+      </div>
+      <div class="hex-ornament right-3 hex-ornament--sm">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(139,92,246,0.05)" stroke="rgba(139,92,246,0.15)" stroke-width="2"/></svg>
+      </div>
+      <!-- Queen aura (glow behind the first card) -->
+      <div class="queen-aura" style="left: 8%; top: 25%;"></div>
+      <!-- Orbit rings with bee points -->
+      <div class="orbit-ring orbit-ring--1">
+        <div class="orbit-bee"></div>
+      </div>
+      <div class="orbit-ring orbit-ring--2">
+        <div class="orbit-bee"></div>
+      </div>
+      <!-- Pulse nodes -->
+      <div class="pulse-node" style="left: 6%; top: 45%;"></div>
+      <div class="pulse-node pulse-node--accent" style="right: 5%; top: 65%;"></div>
+      <div class="pulse-node" style="left: 3%; top: 75%;"></div>
+      <!-- Connection lines SVG -->
+      <svg class="hive-connection-svg" viewBox="0 0 1200 600" preserveAspectRatio="none">
+        <path class="connection-line" d="M 30 100 Q 80 200 30 350"/>
+        <path class="connection-line--accent" d="M 1170 80 Q 1120 250 1170 400"/>
+        <path class="connection-line" d="M 50 450 Q 100 500 60 580"/>
+        <path class="connection-line--accent" d="M 1150 350 Q 1100 450 1160 550"/>
+      </svg>
+      <!-- Bee swarm canvas -->
+      <canvas class="bee-swarm-canvas" data-section="modelo"></canvas>
+    </div>
+    <div class="container">
+      <div class="reveal">
+        <span class="label">O Modelo da Colmeia</span>
+        <h2 class="section-title">Três papéis,<br><span class="gradient-text">um organismo.</span></h2>
+        <p class="section-subtitle">A analogia da colmeia define o modelo operacional da Hive Mind — orquestração, execução e ecossistema trabalhando em sincronia.</p>
+      </div>
+      <div class="hive-grid reveal">
+        <div class="hive-card">
+          <div class="hive-card-icon">
+            <i class="ph ph-crown"></i>
+          </div>
+          <h3>A Rainha</h3>
+          <span class="role">Orquestração Executiva</span>
+          <p>A camada que prioriza cargas de trabalho, direciona tarefas aos agentes corretos e mantém decisões alinhadas aos objetivos de negócio.</p>
+        </div>
+        <div class="hive-card">
+          <div class="hive-card-icon">
+            <i class="ph ph-hammer"></i>
+          </div>
+          <h3>Os Trabalhadores</h3>
+          <span class="role">Execução Especializada</span>
+          <p>Cada agente lida com uma capacidade específica — extração de dados, processamento, qualificação de leads, relatórios — tudo rápido, repetível e auditável.</p>
+        </div>
+        <div class="hive-card">
+          <div class="hive-card-icon">
+            <i class="ph ph-hexagon"></i>
+          </div>
+          <h3>A Colmeia</h3>
+          <span class="role">Ecossistema Modular</span>
+          <p>O ambiente onde integrações, governança, automações e dashboards se conectam como blocos reutilizáveis — não projetos avulsos.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       SERVICES
+  ═══════════════════════════════════ -->
+  <section class="section glass-panel has-hive-decor" id="servicos">
+    <!-- ── Services Side Decorations ── -->
+    <div class="hive-decor-wrapper" aria-hidden="true">
+      <!-- Hex ornaments — worker bee theme -->
+      <div class="hex-ornament left-1">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(34,197,94,0.15)" stroke-width="1.5"/><circle cx="50" cy="50" r="4" fill="rgba(34,197,94,0.3)"/></svg>
+      </div>
+      <div class="hex-ornament left-2 hex-ornament--lg">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(245,158,11,0.03)" stroke="rgba(245,158,11,0.12)" stroke-width="1"/><polygon points="50,20 76,35 76,65 50,80 24,65 24,35" fill="none" stroke="rgba(245,158,11,0.18)" stroke-width="1.5"/></svg>
+      </div>
+      <div class="hex-ornament left-3 hex-ornament--sm">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.22)" stroke-width="2"/></svg>
+      </div>
+      <div class="hex-ornament right-1 hex-ornament--sm">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(245,158,11,0.04)" stroke="rgba(245,158,11,0.18)" stroke-width="1.5"/></svg>
+      </div>
+      <div class="hex-ornament right-2 hex-ornament--lg">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.10)" stroke-width="1"/><polygon points="50,15 80,32 80,68 50,85 20,68 20,32" fill="rgba(245,158,11,0.03)" stroke="rgba(245,158,11,0.14)" stroke-width="1"/></svg>
+      </div>
+      <div class="hex-ornament right-3">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(34,197,94,0.12)" stroke-width="1.5"/></svg>
+      </div>
+      <!-- Orbit rings -->
+      <div class="orbit-ring orbit-ring--3">
+        <div class="orbit-bee"></div>
+      </div>
+      <div class="orbit-ring orbit-ring--2">
+        <div class="orbit-bee"></div>
+      </div>
+      <!-- Pulse nodes -->
+      <div class="pulse-node" style="left: 2%; top: 25%;"></div>
+      <div class="pulse-node" style="right: 3%; top: 40%;"></div>
+      <div class="pulse-node pulse-node--accent" style="left: 5%; top: 72%;"></div>
+      <!-- Connection lines -->
+      <svg class="hive-connection-svg" viewBox="0 0 1200 800" preserveAspectRatio="none">
+        <path class="connection-line" d="M 40 50 Q 60 200 25 400 Q 50 550 35 750"/>
+        <path class="connection-line--accent" d="M 1160 100 Q 1140 300 1175 500 Q 1140 650 1165 780"/>
+        <path class="connection-line" d="M 20 300 C 80 350 80 450 20 500"/>
+        <path class="connection-line--accent" d="M 1180 200 C 1120 280 1120 380 1180 420"/>
+      </svg>
+      <!-- Bee swarm canvas -->
+      <canvas class="bee-swarm-canvas" data-section="servicos"></canvas>
+    </div>
+    <div class="container">
+      <div class="services-header reveal">
+        <span class="label">Serviços</span>
+        <h2 class="section-title">Inteligência que <span class="gradient-text">executa.</span></h2>
+        <p class="section-subtitle">Duas camadas de serviços projetadas para escalar operações com automação governada.</p>
+      </div>
+
+      <div class="services-tabs reveal">
+        <button class="tab-btn active" data-tab="central" onclick="filterServices('central')">Inteligência Central</button>
+        <button class="tab-btn" data-tab="extensao" onclick="filterServices('extensao')">Extensão com IA</button>
+        <button class="tab-btn" data-tab="all" onclick="filterServices('all')">Todos</button>
+      </div>
+
+      <div class="services-grid reveal" id="servicesGrid">
+        <!-- Central -->
+        <div class="service-card visible" data-category="central">
+          <span class="service-number">01</span>
+          <h3>Vendas e Qualificação Autônoma de Leads</h3>
+          <p>Agentes de IA que qualificam leads no CRM, agendam reuniões e processam pedidos de forma autônoma.</p>
+          <div class="service-stack">
+            <span>CRM</span><span>LangChain</span><span>GPT-4</span>
+          </div>
+        </div>
+        <div class="service-card visible" data-category="central">
+          <span class="service-number">02</span>
+          <h3>Previsão de Demanda com ML</h3>
+          <p>Algoritmos em Python treinados com histórico de vendas para prever necessidades futuras de estoque.</p>
+          <div class="service-stack">
+            <span>Python</span><span>scikit-learn</span><span>Pandas</span>
+          </div>
+        </div>
+        <div class="service-card visible" data-category="central">
+          <span class="service-number">03</span>
+          <h3>Processamento em Massa de Documentos</h3>
+          <p>IA que lê notas fiscais, contratos e recibos em escala, extrai dados e insere em ERP/planilhas.</p>
+          <div class="service-stack">
+            <span>OCR</span><span>Python</span><span>ERP API</span>
+          </div>
+        </div>
+        <!-- Extensão -->
+        <div class="service-card" data-category="extensao">
+          <span class="service-number">04</span>
+          <h3>Operações em Enxame e Relatórios</h3>
+          <p>Uma colmeia de agentes: um pesquisa tendências, outro redige relatórios, um terceiro envia alertas estratégicos.</p>
+          <div class="service-stack">
+            <span>CrewAI</span><span>AutoGen</span><span>OpenAI</span>
+          </div>
+        </div>
+        <div class="service-card" data-category="extensao">
+          <span class="service-number">05</span>
+          <h3>Dashboards de Decisão 360°</h3>
+          <p>Dashboards em tempo real que consolidam dados de marketing, finanças e operações.</p>
+          <div class="service-stack">
+            <span>Python</span><span>Plotly</span><span>SQL</span>
+          </div>
+        </div>
+        <div class="service-card" data-category="extensao">
+          <span class="service-number">06</span>
+          <h3>Análise de Sentimento de Clientes</h3>
+          <p>Pipelines de NLP que processam milhares de feedbacks de clientes em escala.</p>
+          <div class="service-stack">
+            <span>NLP</span><span>BERT</span><span>Python</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       PILLARS
+  ═══════════════════════════════════ -->
+  <section class="section pillars glass-panel glass-panel--dense has-hive-decor" id="pilares">
+    <!-- ── Pillars Side Decorations ── -->
+    <div class="hive-decor-wrapper" aria-hidden="true">
+      <!-- Hex ornaments — fortress/structural theme -->
+      <div class="hex-ornament left-1 hex-ornament--xl">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.08)" stroke-width="0.8"/><polygon points="50,12 83,28 83,72 50,88 17,72 17,28" fill="none" stroke="rgba(245,158,11,0.10)" stroke-width="0.8"/><polygon points="50,22 73,35 73,65 50,78 27,65 27,35" fill="none" stroke="rgba(245,158,11,0.14)" stroke-width="1"/><polygon points="50,32 63,40 63,60 50,68 37,60 37,40" fill="rgba(245,158,11,0.04)" stroke="rgba(245,158,11,0.20)" stroke-width="1.2"/></svg>
+      </div>
+      <div class="hex-ornament left-2 hex-ornament--sm">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.18)" stroke-width="2"/></svg>
+      </div>
+      <div class="hex-ornament left-3">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.15)" stroke-width="1.5"/></svg>
+      </div>
+      <div class="hex-ornament right-1 hex-ornament--lg">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.12)" stroke-width="1"/><line x1="50" y1="3" x2="50" y2="97" stroke="rgba(245,158,11,0.06)" stroke-width="0.5"/><line x1="7" y1="50" x2="93" y2="50" stroke="rgba(245,158,11,0.06)" stroke-width="0.5"/></svg>
+      </div>
+      <div class="hex-ornament right-2 hex-ornament--sm">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(245,158,11,0.05)" stroke="rgba(245,158,11,0.20)" stroke-width="2"/></svg>
+      </div>
+      <div class="hex-ornament right-3 hex-ornament--xl">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(139,92,246,0.06)" stroke-width="0.8"/><polygon points="50,18 78,32 78,68 50,82 22,68 22,32" fill="none" stroke="rgba(139,92,246,0.10)" stroke-width="1"/><circle cx="50" cy="50" r="8" fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.15)" stroke-width="1"/></svg>
+      </div>
+      <!-- Orbit rings -->
+      <div class="orbit-ring orbit-ring--1">
+        <div class="orbit-bee"></div>
+      </div>
+      <!-- Pulse nodes -->
+      <div class="pulse-node" style="left: 4%; top: 30%;"></div>
+      <div class="pulse-node pulse-node--accent" style="right: 6%; top: 50%;"></div>
+      <div class="pulse-node" style="right: 2%; top: 80%;"></div>
+      <!-- Data streams -->
+      <div class="data-stream data-stream--1"></div>
+      <div class="data-stream data-stream--3"></div>
+      <div class="data-stream data-stream--5"></div>
+      <!-- Connection lines -->
+      <svg class="hive-connection-svg" viewBox="0 0 1200 600" preserveAspectRatio="none">
+        <path class="connection-line" d="M 35 80 L 35 520"/>
+        <path class="connection-line--accent" d="M 1165 100 L 1165 500"/>
+        <path class="connection-line" d="M 20 200 Q 70 300 20 400"/>
+        <path class="connection-line--accent" d="M 1180 150 Q 1130 300 1180 450"/>
+      </svg>
+      <canvas class="bee-swarm-canvas" data-section="pilares"></canvas>
+    </div>
+    <div class="container">
+      <div class="reveal">
+        <span class="label">Capacidades de Entrega</span>
+        <h2 class="section-title">Os quatro <span class="gradient-text">pilares.</span></h2>
+        <p class="section-subtitle">Um stack de capacidades — não automações isoladas. Cada bloco fortalece o ecossistema inteiro.</p>
+      </div>
+
+      <div class="pillars-grid reveal">
+        <div class="pillar-card">
+          <span class="pillar-number">01</span>
+          <h3>Células Modulares</h3>
+          <span class="pillar-label">Arquitetura Modular</span>
+          <p>"Células de Lógica" independentes que se integram como peças de Lego, permitindo agilidade total na escalabilidade e reutilização de inteligência.</p>
+        </div>
+        <div class="pillar-card">
+          <span class="pillar-number">02</span>
+          <h3>Subdivisão de Enxame</h3>
+          <span class="pillar-label">Dividir para Conquistar</span>
+          <p>Descomposição de desafios massivos em micro-tarefas atômicas. Cada agente opera em eficiência máxima, reduzindo margens de erro.</p>
+        </div>
+        <div class="pillar-card">
+          <span class="pillar-number">03</span>
+          <h3>Integridade da Colmeia</h3>
+          <span class="pillar-label">Validação Total</span>
+          <p>Cada linha de código e interação entre agentes passa por testes rigorosos unitários e de integração. Sincronia perfeita.</p>
+        </div>
+        <div class="pillar-card">
+          <span class="pillar-number">04</span>
+          <h3>Fortaleza de Dados</h3>
+          <span class="pillar-label">Defesa Proativa</span>
+          <p>Proteção contra vulnerabilidades modernas — de Prompt Injections a vazamentos. Camadas de governança e criptografia integradas.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       ORCHESTRATOR
+  ═══════════════════════════════════ -->
+  <section class="section glass-panel glass-panel--light has-hive-decor" id="orquestrador">
+    <!-- ── Orchestrator Side Decorations ── -->
+    <div class="hive-decor-wrapper" aria-hidden="true">
+      <!-- Hex ornaments — queen orchestration theme -->
+      <div class="hex-ornament left-1 hex-ornament--lg">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(245,158,11,0.04)" stroke="rgba(245,158,11,0.18)" stroke-width="1.5"/><circle cx="50" cy="50" r="12" fill="none" stroke="rgba(245,158,11,0.12)" stroke-width="1" stroke-dasharray="4 3"><animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="12s" repeatCount="indefinite"/></circle><circle cx="50" cy="50" r="4" fill="rgba(245,158,11,0.4)"/></svg>
+      </div>
+      <div class="hex-ornament left-2">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.15)" stroke-width="1.5"/></svg>
+      </div>
+      <div class="hex-ornament left-3 hex-ornament--sm">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.20)" stroke-width="2"/></svg>
+      </div>
+      <div class="hex-ornament left-4 hex-ornament--sm">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(245,158,11,0.05)" stroke="rgba(245,158,11,0.16)" stroke-width="1.5"/></svg>
+      </div>
+      <div class="hex-ornament right-1 hex-ornament--xl">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.06)" stroke-width="0.8"/><polygon points="50,20 76,35 76,65 50,80 24,65 24,35" fill="none" stroke="rgba(245,158,11,0.10)" stroke-width="1"/><circle cx="50" cy="50" r="6" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.20)" stroke-width="1"><animate attributeName="r" values="6;10;6" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0.5;1" dur="3s" repeatCount="indefinite"/></circle></svg>
+      </div>
+      <div class="hex-ornament right-2 hex-ornament--sm">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.22)" stroke-width="2"/></svg>
+      </div>
+      <div class="hex-ornament right-3">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(139,92,246,0.12)" stroke-width="1.5"/></svg>
+      </div>
+      <div class="hex-ornament right-4 hex-ornament--lg">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.10)" stroke-width="1"/></svg>
+      </div>
+      <!-- Queen commanding aura -->
+      <div class="queen-aura" style="left: 5%; top: 15%;"></div>
+      <div class="queen-aura" style="right: 5%; top: 40%; width: 160px; height: 160px; background: radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%);"></div>
+      <!-- Orbit rings -->
+      <div class="orbit-ring orbit-ring--1">
+        <div class="orbit-bee"></div>
+      </div>
+      <div class="orbit-ring orbit-ring--2">
+        <div class="orbit-bee"></div>
+      </div>
+      <div class="orbit-ring orbit-ring--3">
+        <div class="orbit-bee"></div>
+      </div>
+      <!-- Data streams flowing -->
+      <div class="data-stream data-stream--1"></div>
+      <div class="data-stream data-stream--2"></div>
+      <div class="data-stream data-stream--3"></div>
+      <div class="data-stream data-stream--4"></div>
+      <div class="data-stream data-stream--5"></div>
+      <div class="data-stream data-stream--6"></div>
+      <!-- Pulse nodes -->
+      <div class="pulse-node" style="left: 4%; top: 20%;"></div>
+      <div class="pulse-node" style="left: 7%; top: 55%;"></div>
+      <div class="pulse-node pulse-node--accent" style="right: 3%; top: 30%;"></div>
+      <div class="pulse-node" style="right: 6%; top: 70%;"></div>
+      <div class="pulse-node pulse-node--accent" style="left: 2%; top: 85%;"></div>
+      <!-- Connection lines -->
+      <svg class="hive-connection-svg" viewBox="0 0 1200 600" preserveAspectRatio="none">
+        <path class="connection-line" d="M 30 50 Q 80 150 30 250 Q 80 350 30 500"/>
+        <path class="connection-line" d="M 60 100 Q 20 200 60 350"/>
+        <path class="connection-line--accent" d="M 1170 60 Q 1120 200 1170 350 Q 1120 450 1170 560"/>
+        <path class="connection-line--accent" d="M 1140 150 Q 1180 300 1140 450"/>
+      </svg>
+      <canvas class="bee-swarm-canvas" data-section="orquestrador"></canvas>
+    </div>
+    <div class="container">
+      <div class="reveal">
+        <span class="label">Camada de Controle</span>
+        <h2 class="section-title">Um orquestrador.<br><span class="gradient-text">Múltiplos sistemas.</span></h2>
+        <p class="section-subtitle">Distribui tarefas, aplica regras, valida saídas e escala exceções — enquanto agentes especializados executam cada etapa.</p>
+      </div>
+
+      <div class="orchestrator-wrapper reveal">
+        <div class="orch-visual">
+          <div class="orch-metrics">
+            <div class="orch-metric">
+              <div class="metric-label">Rotas Ativas</div>
+              <div class="metric-value">+48</div>
+              <div class="metric-status">
+                <span class="dot-live"></span> Operacional
+              </div>
+            </div>
+            <div class="orch-metric">
+              <div class="metric-label">Lógica de Fallback</div>
+              <div class="metric-value">100%</div>
+              <div class="metric-status">
+                <span class="dot-live"></span> Completa
+              </div>
+            </div>
+            <div class="orch-metric">
+              <div class="metric-label">Trilha de Auditoria</div>
+              <div class="metric-value">Live</div>
+              <div class="metric-status">
+                <span class="dot-live"></span> Em tempo real
+              </div>
+            </div>
+            <div class="orch-metric">
+              <div class="metric-label">Uptime</div>
+              <div class="metric-value">99.9%</div>
+              <div class="metric-status">
+                <span class="dot-live"></span> Ativo
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="orch-features">
+          <div class="orch-feature">
+            <div class="orch-feature-icon">
+              <i class="ph ph-git-branch"></i>
+            </div>
+            <div>
+              <h4>Regras Centralizadas</h4>
+              <p>Regras de decisão centralizadas para CRM, ERP, suporte e workflows de dados.</p>
+            </div>
+          </div>
+          <div class="orch-feature">
+            <div class="orch-feature-icon">
+              <i class="ph ph-shield-warning"></i>
+            </div>
+            <div>
+              <h4>Tratamento de Exceções</h4>
+              <p>Monitoramento proativo antes que problemas se propaguem pelo fluxo operacional.</p>
+            </div>
+          </div>
+          <div class="orch-feature">
+            <div class="orch-feature-icon">
+              <i class="ph ph-puzzle-piece"></i>
+            </div>
+            <div>
+              <h4>Execução Componível</h4>
+              <p>Modelo de execução que suporta novos agentes sem reconstruir o stack existente.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       IMPACT
+  ═══════════════════════════════════ -->
+  <section class="section impact glass-panel glass-panel--dense has-hive-decor" id="impacto">
+    <!-- ── Impact Side Decorations ── -->
+    <div class="hive-decor-wrapper" aria-hidden="true">
+      <div class="hex-ornament left-1">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.15)" stroke-width="1.5"/></svg>
+      </div>
+      <div class="hex-ornament left-2 hex-ornament--lg">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(245,158,11,0.03)" stroke="rgba(245,158,11,0.12)" stroke-width="1"/></svg>
+      </div>
+      <div class="hex-ornament right-1 hex-ornament--sm">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="rgba(34,197,94,0.05)" stroke="rgba(34,197,94,0.18)" stroke-width="2"/></svg>
+      </div>
+      <div class="hex-ornament right-2">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(245,158,11,0.12)" stroke-width="1.5"/></svg>
+      </div>
+      <div class="hex-ornament right-3 hex-ornament--lg">
+        <svg viewBox="0 0 100 100"><polygon points="50,3 93,25 93,75 50,97 7,75 7,25" fill="none" stroke="rgba(139,92,246,0.08)" stroke-width="1"/></svg>
+      </div>
+      <div class="orbit-ring orbit-ring--1">
+        <div class="orbit-bee"></div>
+      </div>
+      <div class="pulse-node" style="left: 3%; top: 35%;"></div>
+      <div class="pulse-node pulse-node--accent" style="right: 4%; top: 55%;"></div>
+      <svg class="hive-connection-svg" viewBox="0 0 1200 600" preserveAspectRatio="none">
+        <path class="connection-line" d="M 30 80 Q 70 200 30 400"/>
+        <path class="connection-line--accent" d="M 1170 100 Q 1130 250 1170 450"/>
+      </svg>
+      <canvas class="bee-swarm-canvas" data-section="impacto"></canvas>
+    </div>
+    <div class="container">
+      <div class="impact-header reveal">
+        <span class="label">Impacto Esperado</span>
+        <h2 class="section-title">Resultados que <span class="gradient-text">escalam.</span></h2>
+        <p class="section-subtitle">O objetivo não é apenas velocidade — é execução rastreável com contexto de negócio.</p>
+      </div>
+
+      <div class="impact-grid reveal">
+        <div class="impact-card">
+          <div class="impact-value" data-count="70">+70%</div>
+          <div class="impact-label">Eficiência operacional</div>
+        </div>
+        <div class="impact-card">
+          <div class="impact-value">10×</div>
+          <div class="impact-label">ROI ilustrativo</div>
+        </div>
+        <div class="impact-card">
+          <div class="impact-value">+90%</div>
+          <div class="impact-label">Visibilidade de processos</div>
+        </div>
+        <div class="impact-card">
+          <div class="impact-value">360°</div>
+          <div class="impact-label">Contexto de dados</div>
+        </div>
+      </div>
+
+      <div class="perf-grid reveal">
+        <div class="perf-item">
+          <div class="perf-header">
+            <span class="perf-name">Operações</span>
+            <span class="perf-pct">84%</span>
+          </div>
+          <div class="perf-bar">
+            <div class="perf-bar-fill" style="width: 84%"></div>
+          </div>
+        </div>
+        <div class="perf-item">
+          <div class="perf-header">
+            <span class="perf-name">Vendas</span>
+            <span class="perf-pct">91%</span>
+          </div>
+          <div class="perf-bar">
+            <div class="perf-bar-fill" style="width: 91%"></div>
+          </div>
+        </div>
+        <div class="perf-item">
+          <div class="perf-header">
+            <span class="perf-name">Suporte</span>
+            <span class="perf-pct">76%</span>
+          </div>
+          <div class="perf-bar">
+            <div class="perf-bar-fill" style="width: 76%"></div>
+          </div>
+        </div>
+        <div class="perf-item">
+          <div class="perf-header">
+            <span class="perf-name">Dados</span>
+            <span class="perf-pct">88%</span>
+          </div>
+          <div class="perf-bar">
+            <div class="perf-bar-fill" style="width: 88%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       CTA SECTION
+  ═══════════════════════════════════ -->
+  <section class="section cta-section glass-panel glass-panel--light" id="contato">
+    <div class="container">
+      <div class="cta-box reveal">
+        <span class="label">Próximo Passo</span>
+        <h2>Saia dos experimentos isolados<br>para um <span class="gradient-text">modelo operacional com IA.</span></h2>
+        <p>Mapeamos seus fluxos de trabalho, identificamos as oportunidades de automação de maior impacto e projetamos uma camada de entrega baseada na Colmeia.</p>
+        <div class="cta-actions">
+          <a href="mailto:contato@hivemind.ai" class="btn btn-primary btn-large">
+            <i class="ph ph-envelope-simple"></i>
+            contato@hivemind.ai
+          </a>
+          <a href="#servicos" class="btn btn-outline btn-large">
+            Ver Serviços
+          </a>
+        </div>
+        <div class="cta-details">
+          <span class="cta-detail">
+            <i class="ph ph-magnifying-glass"></i>
+            Diagnóstico estratégico
+          </span>
+          <span class="cta-detail">
+            <i class="ph ph-map-trifold"></i>
+            Roadmap faseado
+          </span>
+          <span class="cta-detail">
+            <i class="ph ph-shield-check"></i>
+            Governança desde o início
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════ -->
+  <footer class="footer glass-panel glass-panel--solid">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="logo">
+            <span class="logo-icon">
+              <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 2L30 10V26L18 34L6 26V10L18 2Z" stroke="#F59E0B" stroke-width="2" fill="rgba(245,158,11,0.1)"/>
+                <path d="M18 10L24 14V22L18 26L12 22V14L18 10Z" stroke="#F59E0B" stroke-width="1.5" fill="rgba(245,158,11,0.15)"/>
+                <circle cx="18" cy="18" r="3" fill="#F59E0B"/>
+              </svg>
+            </span>
+            Hive Mind
+          </div>
+          <p>Automação com IA, operações orquestradas e inteligência de dados. Flexível em plataforma. Intransigente com resultados.</p>
+        </div>
+
+        <div class="footer-col">
+          <h4>Modelo</h4>
+          <ul>
+            <li><a href="#modelo">A Rainha</a></li>
+            <li><a href="#modelo">Os Trabalhadores</a></li>
+            <li><a href="#modelo">A Colmeia</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Serviços</h4>
+          <ul>
+            <li><a href="#servicos">Inteligência Central</a></li>
+            <li><a href="#servicos">Extensão com IA</a></li>
+            <li><a href="#orquestrador">Orquestrador</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Contato</h4>
+          <ul>
+            <li><a href="mailto:contato@hivemind.ai">contato@hivemind.ai</a></li>
+            <li><a href="#contato">Agendar Diagnóstico</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2026 Hive Mind &middot; AI Operating Studio</p>
+        <div class="footer-socials">
+          <a href="#" aria-label="LinkedIn"><i class="ph ph-linkedin-logo"></i></a>
+          <a href="#" aria-label="GitHub"><i class="ph ph-github-logo"></i></a>
+          <a href="#" aria-label="X / Twitter"><i class="ph ph-x-logo"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════
+       SCRIPTS
+  ═══════════════════════════════════ -->
+  <script>
+    // ── Navbar scroll effect ──
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // ── Mobile nav toggle ──
+    const navToggle = document.getElementById('navToggle');
+    const navLinks = document.getElementById('navLinks');
+    navToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+      const icon = navToggle.querySelector('i');
+      icon.classList.toggle('ph-list');
+      icon.classList.toggle('ph-x');
+    });
+
+    // Close mobile nav when clicking a link
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        navLinks.classList.remove('open');
+        const icon = navToggle.querySelector('i');
+        icon.classList.add('ph-list');
+        icon.classList.remove('ph-x');
+      });
+    });
+
+    // ── Services tab filtering ──
+    function filterServices(category) {
+      // Update active tab
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === category);
+      });
+
+      // Filter cards
+      document.querySelectorAll('.service-card').forEach(card => {
+        if (category === 'all' || card.dataset.category === category) {
+          card.classList.add('visible');
+        } else {
+          card.classList.remove('visible');
+        }
+      });
+    }
+
+    // ── Scroll reveal (IntersectionObserver) ──
+    const revealElements = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    revealElements.forEach(el => revealObserver.observe(el));
+
+    // ── Smooth scroll for anchor links ──
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    //  HIVE SIDE DECORATIONS — Scroll-triggered activation
+    //  + BEE SWARM Particle System
+    // ═══════════════════════════════════════════════════════════════
+
+    // ── Activate decoration wrappers on scroll ──
+    const decorWrappers = document.querySelectorAll('.hive-decor-wrapper');
+    const decorObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        entry.target.classList.toggle('active', entry.isIntersecting);
+      });
+    }, { threshold: 0.05, rootMargin: '60px 0px' });
+    decorWrappers.forEach(el => decorObserver.observe(el));
+
+    // ── BEE SWARM PARTICLE SYSTEM ──
+    // Each canvas creates organic "worker bee" particles flying on the sides
+    (function initBeeSwarms() {
+      'use strict';
+
+      var prefersReduced = window.matchMedia
+        ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        : false;
+      if (prefersReduced) return;
+
+      var canvases = document.querySelectorAll('.bee-swarm-canvas');
+      if (!canvases.length) return;
+
+      var isMobileSwarm = window.innerWidth <= 768;
+
+      // Shared visibility state
+      var isPageVisible = true;
+      document.addEventListener('visibilitychange', function() {
+        isPageVisible = (document.visibilityState === 'visible');
+      });
+
+      // ── Bee class ──
+      function Bee(canvas, side) {
+        this.canvas = canvas;
+        this.side = side; // 'left' or 'right'
+        this.reset();
+      }
+
+      Bee.prototype.reset = function() {
+        var w = this.canvas.width;
+        var h = this.canvas.height;
+        var margin = w * 0.12; // Stay within side margins
+
+        if (this.side === 'left') {
+          this.x = Math.random() * margin;
+          this.homeX = margin * 0.5;
+        } else {
+          this.x = w - Math.random() * margin;
+          this.homeX = w - margin * 0.5;
+        }
+
+        this.y = Math.random() * h;
+        this.size = 2 + Math.random() * 3;
+        this.speed = 0.3 + Math.random() * 0.6;
+        this.angle = Math.random() * Math.PI * 2;
+        this.wobble = Math.random() * Math.PI * 2;
+        this.wobbleSpeed = 0.02 + Math.random() * 0.03;
+        this.wobbleAmp = 15 + Math.random() * 25;
+        this.glowIntensity = 0.4 + Math.random() * 0.5;
+        this.trailLength = 3 + Math.floor(Math.random() * 4);
+        this.trail = [];
+        this.life = 0;
+        this.maxLife = 300 + Math.random() * 400;
+        this.fadeIn = 40;
+        this.fadeOut = 60;
+        // Organic Bezier path
+        this.pathT = 0;
+        this.pathSpeed = 0.002 + Math.random() * 0.003;
+        this.cp1x = this.homeX + (Math.random() - 0.5) * 60;
+        this.cp1y = this.y + (Math.random() - 0.5) * 200;
+        this.cp2x = this.homeX + (Math.random() - 0.5) * 60;
+        this.cp2y = this.y + (Math.random() > 0.5 ? -1 : 1) * (100 + Math.random() * 200);
+        this.endY = this.y + (Math.random() > 0.5 ? -1 : 1) * (150 + Math.random() * 300);
+      };
+
+      Bee.prototype.update = function() {
+        this.life++;
+        if (this.life > this.maxLife) {
+          this.reset();
+          return;
+        }
+
+        // Move along a gentle organic path
+        this.wobble += this.wobbleSpeed;
+        this.pathT += this.pathSpeed;
+
+        var wx = Math.sin(this.wobble) * this.wobbleAmp;
+        var wy = Math.cos(this.wobble * 0.7) * this.wobbleAmp * 0.6;
+
+        this.x = this.homeX + wx;
+        this.y += (this.speed * (Math.sin(this.pathT * 3) > 0 ? -1 : 1));
+
+        // Wrap vertically
+        var h = this.canvas.height;
+        if (this.y < -20) this.y = h + 20;
+        if (this.y > h + 20) this.y = -20;
+
+        // Trail
+        this.trail.unshift({ x: this.x, y: this.y });
+        if (this.trail.length > this.trailLength) {
+          this.trail.pop();
+        }
+      };
+
+      Bee.prototype.draw = function(ctx) {
+        // Fade in/out
+        var alpha = 1;
+        if (this.life < this.fadeIn) {
+          alpha = this.life / this.fadeIn;
+        } else if (this.life > this.maxLife - this.fadeOut) {
+          alpha = (this.maxLife - this.life) / this.fadeOut;
+        }
+        alpha = Math.max(0, Math.min(1, alpha));
+
+        var gi = this.glowIntensity * alpha;
+
+        // Trail
+        for (var i = 1; i < this.trail.length; i++) {
+          var t = this.trail[i];
+          var ta = (1 - i / this.trail.length) * 0.3 * alpha;
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, this.size * 0.6 * (1 - i / this.trail.length), 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(245, 178, 11,' + ta.toFixed(3) + ')';
+          ctx.fill();
+        }
+
+        // Glow
+        ctx.save();
+        ctx.shadowColor = 'rgba(245, 158, 11,' + (gi * 0.6).toFixed(3) + ')';
+        ctx.shadowBlur = 12;
+
+        // Body
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(245, 178, 11,' + (gi * 0.9).toFixed(3) + ')';
+        ctx.fill();
+
+        // Inner bright core
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 0.4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 215, 0,' + (gi).toFixed(3) + ')';
+        ctx.fill();
+
+        ctx.restore();
+      };
+
+      // ── Swarm per canvas ──
+      function Swarm(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d', { alpha: true });
+        this.bees = [];
+        this.active = false;
+        this.resize();
+
+        // Create bees for left and right sides (fewer on mobile)
+        var beeCount = isMobileSwarm
+          ? Math.max(3, Math.floor(this.canvas.width / 200))
+          : Math.max(6, Math.floor(this.canvas.width / 120));
+        for (var i = 0; i < beeCount; i++) {
+          this.bees.push(new Bee(canvas, i % 2 === 0 ? 'left' : 'right'));
+        }
+      }
+
+      Swarm.prototype.resize = function() {
+        var section = this.canvas.closest('.has-hive-decor');
+        if (!section) return;
+        this.canvas.width = section.offsetWidth;
+        this.canvas.height = section.offsetHeight;
+
+        // Re-position bees
+        for (var i = 0; i < this.bees.length; i++) {
+          this.bees[i].canvas = this.canvas;
+          this.bees[i].reset();
+        }
+      };
+
+      Swarm.prototype.tick = function() {
+        if (!this.active || !isPageVisible) return;
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        for (var i = 0; i < this.bees.length; i++) {
+          this.bees[i].update();
+          this.bees[i].draw(this.ctx);
+        }
+      };
+
+      // Create swarms
+      var swarms = [];
+      canvases.forEach(function(c) {
+        swarms.push(new Swarm(c));
+      });
+
+      // Observe activation
+      var swarmObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          var canvas = entry.target;
+          for (var i = 0; i < swarms.length; i++) {
+            if (swarms[i].canvas === canvas) {
+              swarms[i].active = entry.isIntersecting;
+              break;
+            }
+          }
+        });
+      }, { threshold: 0.01, rootMargin: '100px 0px' });
+
+      canvases.forEach(function(c) { swarmObserver.observe(c); });
+
+      // Resize handler
+      window.addEventListener('resize', function() {
+        for (var i = 0; i < swarms.length; i++) {
+          swarms[i].resize();
+        }
+      });
+
+      // Animation loop
+      function beeLoop() {
+        requestAnimationFrame(beeLoop);
+        for (var i = 0; i < swarms.length; i++) {
+          swarms[i].tick();
+        }
+      }
+      requestAnimationFrame(beeLoop);
+    })();
+  </script>
+
+
+  <!-- ═══════════════════════════════════════════════════════════════
+       HIVE MIND — FULLPAGE FLUID BACKGROUND + HERO HEX GRID
+       ─────────────────────────────────────────────────────────────
+       Architecture (shader global · hex hero-only):
+
+       #shader-bg (position:fixed, covers viewport)
+         ├─ <canvas>   WebGL mesh-gradient shader @ 60 fps
+         ├─ #shader-overlay  rgba(0,0,0,0.35) dark overlay
+         └─ <canvas>   Hex grid + proximity glow + honey drip @ 60 fps
+
+       .hero-bg (position:absolute within hero only)
+         └─ .hero-overlay  rgba(0,0,0,0.10) — lighter overlay on hero
+
+       Glass panels (.glass-panel) on sections blur the shader
+       creating depth & ensuring text contrast (WCAG AA 4.5:1+).
+       Shader is visible in gaps between sections (breathing rhythm).
+  ═══════════════════════════════════════════════════════════════ -->
+  <script>
+  (function initHiveMindBg() {
+    'use strict';
+
+    // ── Shared state ──────────────────────────────────────────────
+    var isVisible = true;
+    document.addEventListener('visibilitychange', function() {
+      isVisible = (document.visibilityState === 'visible');
+    });
+
+    var prefersReduced = window.matchMedia
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false;
+
+    // ═════════════════════════════════════════════════════════════════
+    //  PART A — GLOBAL WebGL SHADER (position: fixed · #shader-bg)
+    // ═════════════════════════════════════════════════════════════════
+    (function initShader() {
+      var container = document.getElementById('shader-bg');
+      if (!container) return;
+
+      var glCanvas = document.createElement('canvas');
+      glCanvas.style.cssText = 'display:block;width:100%;height:100%;';
+      glCanvas.setAttribute('aria-hidden', 'true');
+
+      var overlayDiv = document.createElement('div');
+      overlayDiv.id = 'shader-overlay';
+      overlayDiv.setAttribute('aria-hidden', 'true');
+
+      container.appendChild(glCanvas);
+      container.appendChild(overlayDiv);
+
+      var gl = null;
+      try {
+        gl = glCanvas.getContext('webgl', {
+          antialias: false, alpha: false, powerPreference: 'default'
+        });
+      } catch(e) {}
+
+      if (!gl) return; // CSS fallback gradient handles this
+
+      var VS = 'attribute vec2 aPos;\nvoid main(){gl_Position=vec4(aPos,0.0,1.0);}';
+
+      var FS = [
+        'precision mediump float;',
+        'uniform float uTime;',
+        'uniform vec2  uRes;',
+        'float hash(vec2 p){',
+        '  p=fract(p*vec2(127.1,311.7));',
+        '  p+=dot(p,p+45.32);',
+        '  return fract(p.x*p.y);',
+        '}',
+        'float vnoise(vec2 uv){',
+        '  vec2 i=floor(uv),f=fract(uv);',
+        '  float a=hash(i),b=hash(i+vec2(1.0,0.0)),',
+        '        c=hash(i+vec2(0.0,1.0)),d=hash(i+vec2(1.0,1.0));',
+        '  vec2 u=f*f*(3.0-2.0*f);',
+        '  return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;',
+        '}',
+        'void main(){',
+        '  vec2  uv=gl_FragCoord.xy/uRes;',
+        '  float t=uTime*0.28;',
+        '  float n1=vnoise(uv*2.8+vec2(t*0.52, t*0.36));',
+        '  float n2=vnoise(uv*4.2+vec2(-t*0.34+n1*0.50,',
+        '                               t*0.58+n1*0.38));',
+        '  float n3=vnoise(uv*2.2+vec2( t*0.28+n2*0.38,',
+        '                              -t*0.46+n1*0.22));',
+        '  vec3 cBlack =vec3(0.020,0.020,0.020);',
+        '  vec3 cDark  =vec3(0.078,0.078,0.078);',
+        '  vec3 cDkAmb =vec3(0.541,0.416,0.000);',
+        '  vec3 cGold  =vec3(0.722,0.525,0.043);',
+        '  vec3 cAmber =vec3(0.918,0.702,0.031);',
+        '  vec3 cPurp  =vec3(0.345,0.188,0.750);',
+        '  vec3 col=cBlack;',
+        '  col=mix(col,cDark,  smoothstep(0.18,0.42,n3));',
+        '  col=mix(col,cDkAmb, smoothstep(0.25,0.55,n1));',
+        '  col=mix(col,cGold,  smoothstep(0.38,0.68,n2)*0.82);',
+        '  col=mix(col,cAmber, smoothstep(0.48,0.80,n2*n1)*0.92);',
+        '  col=mix(col,cPurp,  smoothstep(0.68,0.95,n1*n3)*0.12);',
+        '  col=mix(col,cBlack, smoothstep(0.85,1.00,n3)*0.35);',
+        '  vec2 vc=uv*2.0-1.0;',
+        '  col*=1.0-dot(vc,vc)*0.30;',
+        '  gl_FragColor=vec4(col,1.0);',
+        '}'
+      ].join('\n');
+
+      function mkShader(type, src) {
+        var s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        return s;
+      }
+
+      var prog = gl.createProgram();
+      gl.attachShader(prog, mkShader(gl.VERTEX_SHADER,   VS));
+      gl.attachShader(prog, mkShader(gl.FRAGMENT_SHADER, FS));
+      gl.linkProgram(prog);
+
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+
+      gl.useProgram(prog);
+      var uTimeLoc = gl.getUniformLocation(prog, 'uTime');
+      var uResLoc  = gl.getUniformLocation(prog, 'uRes');
+      var aPosLoc  = gl.getAttribLocation(prog,  'aPos');
+
+      var buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER,
+        new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+      gl.enableVertexAttribArray(aPosLoc);
+      gl.vertexAttribPointer(aPosLoc, 2, gl.FLOAT, false, 0, 0);
+
+      var glW = 0, glH = 0;
+      var glStartMs = performance.now();
+      var isMobileGL = window.innerWidth <= 768;
+      var glScale = isMobileGL ? 0.6 : 1.0; // Lower resolution on mobile
+
+      function resizeGL() {
+        glW = Math.floor(window.innerWidth * glScale);
+        glH = Math.floor(window.innerHeight * glScale);
+        glCanvas.width  = glW;
+        glCanvas.height = glH;
+        gl.viewport(0, 0, glW, glH);
+      }
+      resizeGL();
+      window.addEventListener('resize', resizeGL);
+
+      function shaderFrame(ts) {
+        requestAnimationFrame(shaderFrame);
+        if (!isVisible) return;
+        gl.uniform1f(uTimeLoc, (ts - glStartMs) / 1000);
+        gl.uniform2f(uResLoc, glW, glH);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      }
+      requestAnimationFrame(shaderFrame);
+    })();
+
+    // ═════════════════════════════════════════════════════════════════
+    //  PART B — FULLPAGE HEX GRID (fixed · inside #shader-bg)
+    //  Covers the entire viewport behind all content, visible through
+    //  transparent glass panels. Mouse glow tracks across whole page.
+    // ═════════════════════════════════════════════════════════════════
+    (function initHexGrid() {
+      if (prefersReduced) return;
+
+      var container = document.getElementById('shader-bg');
+      if (!container) return;
+
+      var HEX_SIZE      = window.innerWidth <= 480 ? 32 : window.innerWidth <= 768 ? 38 : 44;
+      var HEX_FPS_MS    = window.innerWidth <= 768 ? 1000 / 30 : 1000 / 60;
+      var PROX_RADIUS   = window.innerWidth <= 768 ? 0 : 160; // No mouse glow on mobile (no hover)
+      var PROX_SQ       = PROX_RADIUS * PROX_RADIUS;
+      var AMBER_SPAWN_S = window.innerWidth <= 768 ? 2.8 : 1.6;
+      var AMBER_CHANCE  = window.innerWidth <= 768 ? 0.06 : 0.10;
+      var HEX_OPACITY   = window.innerWidth <= 768 ? 0.65 : 0.92;
+
+      var HEX_OFF = [];
+      for (var _i = 0; _i < 6; _i++) {
+        var _a = (Math.PI / 3) * _i;
+        HEX_OFF.push({ dx: HEX_SIZE * Math.cos(_a), dy: HEX_SIZE * Math.sin(_a) });
+      }
+
+      var ROOT3      = Math.sqrt(3);
+      var ROOT3_HALF = ROOT3 / 2;
+      var HEX_H      = ROOT3 * HEX_SIZE;
+      var HEX_W      = HEX_SIZE * 2;
+
+      var hexCanvas = document.createElement('canvas');
+      hexCanvas.setAttribute('aria-hidden', 'true');
+      hexCanvas.style.cssText =
+        'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;' +
+        'opacity:' + HEX_OPACITY + ';z-index:2;';
+      container.appendChild(hexCanvas);
+
+      var hexCtx    = hexCanvas.getContext('2d', { alpha: true });
+      var offscreen = null;
+      var cells     = [];
+      var cellMap   = {};
+      var W = 0, H = 0;
+
+      // Total document height (for grid that covers whole scrollable page)
+      function docHeight() {
+        return Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight,
+          window.innerHeight
+        );
+      }
+
+      function hexPx(q, r) {
+        return {
+          x: HEX_SIZE * 1.5 * q,
+          y: HEX_SIZE * (ROOT3_HALF * q + ROOT3 * r)
+        };
+      }
+
+      function drawHex(ctx, cx, cy, size, stroke, lw, fill) {
+        ctx.beginPath();
+        if (size === HEX_SIZE) {
+          ctx.moveTo(cx + HEX_OFF[0].dx, cy + HEX_OFF[0].dy);
+          for (var i = 1; i < 6; i++)
+            ctx.lineTo(cx + HEX_OFF[i].dx, cy + HEX_OFF[i].dy);
+        } else {
+          for (var j = 0; j < 6; j++) {
+            var _ang = (Math.PI / 3) * j;
+            var _hx  = cx + size * Math.cos(_ang);
+            var _hy  = cy + size * Math.sin(_ang);
+            if (j === 0) ctx.moveTo(_hx, _hy); else ctx.lineTo(_hx, _hy);
+          }
+        }
+        ctx.closePath();
+        if (fill !== undefined) { ctx.fillStyle = fill; ctx.fill(); }
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth   = lw;
+        ctx.stroke();
+      }
+
+      function buildGrid() {
+        var cols = Math.ceil(W / (HEX_W * 0.75)) + 2;
+        var rows = Math.ceil(H / HEX_H)            + 2;
+        var offX = W / 2 - (cols * HEX_W * 0.75) / 2;
+        var offY = H / 2 - (rows * HEX_H)         / 2;
+
+        var oc = document.createElement('canvas');
+        oc.width = W; oc.height = H;
+        var ot = oc.getContext('2d', { alpha: true });
+        ot.clearRect(0, 0, W, H);
+
+        cells   = [];
+        cellMap = {};
+
+        for (var q = -2; q < cols; q++) {
+          for (var r = -2; r < rows; r++) {
+            var p  = hexPx(q, r);
+            var cx = p.x + offX;
+            var cy = p.y + offY;
+            if (cx < -HEX_SIZE || cx > W + HEX_SIZE ||
+                cy < -HEX_SIZE || cy > H + HEX_SIZE) continue;
+
+            cells.push({ q: q, r: r, x: cx, y: cy });
+            cellMap[q + ':' + r] = { x: cx, y: cy };
+            drawHex(ot, cx, cy, HEX_SIZE, 'rgba(234,179,8,0.18)', 0.85);
+          }
+        }
+        offscreen = oc;
+      }
+
+      function resize() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        hexCanvas.width  = W;
+        hexCanvas.height = H;
+        buildGrid();
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      // ── Cursor tracking (viewport-relative) ──────────────────────
+      var mouseX = -9999, mouseY = -9999;
+      document.addEventListener('mousemove', function(e) {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      }, { passive: true });
+      document.addEventListener('mouseleave', function() {
+        mouseX = mouseY = -9999;
+      }, { passive: true });
+
+      // ── Amber cells state machine ────────────────────────────────
+      var amberCells   = [];
+      var lastSpawnSec = 0;
+      var hexTimeSec   = 0;
+      var lastHexMs    = 0;
+
+      function hexFrame(ts) {
+        requestAnimationFrame(hexFrame);
+        if (!isVisible) return;
+        if (ts - lastHexMs < HEX_FPS_MS) return;
+        lastHexMs = ts;
+
+        hexTimeSec += 0.016;
+        hexCtx.clearRect(0, 0, W, H);
+
+        if (offscreen) {
+          hexCtx.globalAlpha = 0.9;
+          hexCtx.drawImage(offscreen, 0, 0);
+          hexCtx.globalAlpha = 1;
+        }
+
+        // Proximity glow
+        for (var ci = 0; ci < cells.length; ci++) {
+          var cc = cells[ci];
+          var dx = mouseX - cc.x;
+          var dy = mouseY - cc.y;
+          var ds = dx * dx + dy * dy;
+          if (ds >= PROX_SQ) continue;
+          var gi = (1 - Math.sqrt(ds) / PROX_RADIUS) * 0.7;
+          drawHex(hexCtx, cc.x, cc.y, HEX_SIZE,
+            'rgba(234,179,8,' + gi.toFixed(3) + ')', 1.6);
+        }
+
+        // Amber fill + drip (screen blend)
+        hexCtx.save();
+        hexCtx.globalCompositeOperation = 'screen';
+
+        if (hexTimeSec - lastSpawnSec > AMBER_SPAWN_S &&
+            Math.random() < AMBER_CHANCE &&
+            cells.length > 0) {
+          var src = cells[Math.floor(Math.random() * cells.length)];
+          amberCells.push({
+            q: src.q, r: src.r,
+            fillProgress: 0, dripProgress: 0,
+            lifetime: 0, state: 'filling'
+          });
+          lastSpawnSec = hexTimeSec;
+        }
+
+        amberCells = amberCells.filter(function(cell) {
+          cell.lifetime += 0.016;
+          if (cell.lifetime > 12) return false;
+
+          var pos = cellMap[cell.q + ':' + cell.r];
+          if (!pos) return false;
+          var x = pos.x, y = pos.y;
+
+          if (cell.state === 'filling') {
+            cell.fillProgress = Math.min(1, cell.fillProgress + 0.022);
+
+            var fg = hexCtx.createLinearGradient(x, y + HEX_SIZE, x, y - HEX_SIZE);
+            fg.addColorStop(0,   'rgba(218,165,32,0.75)');
+            fg.addColorStop(0.4, 'rgba(234,179,8, 0.92)');
+            fg.addColorStop(1,   'rgba(255,215,0, 0.55)');
+
+            hexCtx.save();
+            hexCtx.shadowColor = 'rgba(234,179,8,0.5)';
+            hexCtx.shadowBlur  = 18;
+            hexCtx.beginPath();
+            for (var fi = 0; fi < 6; fi++) {
+              var fo = HEX_OFF[fi];
+              if (fi === 0) hexCtx.moveTo(x + fo.dx, y + fo.dy);
+              else          hexCtx.lineTo(x + fo.dx, y + fo.dy);
+            }
+            hexCtx.closePath();
+            hexCtx.clip();
+            var fillH = HEX_SIZE * 2 * cell.fillProgress;
+            hexCtx.fillStyle = fg;
+            hexCtx.fillRect(x - HEX_SIZE, y + HEX_SIZE - fillH, HEX_SIZE * 2, fillH);
+            hexCtx.restore();
+
+            if (cell.fillProgress >= 1) cell.state = 'dripping';
+
+          } else if (cell.state === 'dripping') {
+            cell.dripProgress = Math.min(1, cell.dripProgress + 0.018);
+
+            hexCtx.save();
+            hexCtx.shadowColor = 'rgba(234,179,8,0.45)';
+            hexCtx.shadowBlur  = 14;
+
+            var dg = hexCtx.createLinearGradient(x, y + HEX_SIZE, x, y - HEX_SIZE);
+            dg.addColorStop(0,   'rgba(218,165,32,0.75)');
+            dg.addColorStop(0.4, 'rgba(234,179,8, 0.92)');
+            dg.addColorStop(1,   'rgba(255,215,0, 0.55)');
+
+            drawHex(hexCtx, x, y, HEX_SIZE, 'rgba(255,215,0,0.40)', 1.2, dg);
+
+            var dripY   = y + HEX_SIZE + cell.dripProgress * 110;
+            var stretch = Math.sin(cell.dripProgress * Math.PI) * 14;
+            var drop    = dripY - y - HEX_SIZE;
+
+            hexCtx.beginPath();
+            hexCtx.moveTo(x - 2, y + HEX_SIZE);
+            hexCtx.bezierCurveTo(
+              x - stretch - 1, y + HEX_SIZE + drop * 0.25,
+              x + stretch + 1, y + HEX_SIZE + drop * 0.55,
+              x, dripY
+            );
+            hexCtx.bezierCurveTo(
+              x - stretch + 1, y + HEX_SIZE + drop * 0.55,
+              x + stretch - 1, y + HEX_SIZE + drop * 0.25,
+              x + 2, y + HEX_SIZE
+            );
+            var rawDa = (1 - cell.dripProgress) * 0.92;
+            hexCtx.fillStyle = 'rgba(234,179,8,' + rawDa.toFixed(3) + ')';
+            hexCtx.fill();
+
+            var beadR = Math.max(0.5, 4.5 - cell.dripProgress * 3.5);
+            hexCtx.beginPath();
+            hexCtx.arc(x, dripY, beadR, 0, Math.PI * 2);
+            hexCtx.fillStyle = 'rgba(255,215,0,' + ((1 - cell.dripProgress) * 0.95).toFixed(3) + ')';
+            hexCtx.fill();
+
+            hexCtx.restore();
+
+            if (cell.dripProgress > 0.15 && cell.dripProgress < 0.85) {
+              hexCtx.beginPath();
+              hexCtx.moveTo(x, y + HEX_SIZE);
+              hexCtx.lineTo(x, dripY - beadR * 2);
+              hexCtx.strokeStyle = 'rgba(218,165,32,' + (rawDa * 0.4).toFixed(3) + ')';
+              hexCtx.lineWidth = 0.8;
+              hexCtx.stroke();
+            }
+
+            if (cell.dripProgress >= 1) { cell.state = 'fading'; cell.fadeAlpha = 1; }
+
+          } else if (cell.state === 'fading') {
+            var fa = (cell.fadeAlpha = Math.max(0, (cell.fadeAlpha || 1) - 0.012));
+            if (fa <= 0) return false;
+            var ff = hexCtx.createLinearGradient(x, y + HEX_SIZE, x, y - HEX_SIZE);
+            ff.addColorStop(0,   'rgba(218,165,32,' + (0.60 * fa).toFixed(3) + ')');
+            ff.addColorStop(0.5, 'rgba(234,179,8,'  + (0.70 * fa).toFixed(3) + ')');
+            ff.addColorStop(1,   'rgba(255,215,0,'  + (0.35 * fa).toFixed(3) + ')');
+            drawHex(hexCtx, x, y, HEX_SIZE,
+              'rgba(255,215,0,' + (0.20 * fa).toFixed(3) + ')', 1, ff);
+          }
+          return true;
+        });
+
+        hexCtx.restore();
+      }
+      requestAnimationFrame(hexFrame);
+    })();
+
+  }());
+  </script>
+
+</body>
+</html>
